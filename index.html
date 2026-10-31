@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- App-Installation (PWA) -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="FitBoard" />
+  <title>FitBoard</title>
+
+  <!-- Schriftart -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Eigene Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Gespeichertes Farbschema sofort anwenden (verhindert kurzes Aufblitzen) -->
+  <script>
+    try {
+      var savedTheme = JSON.parse(localStorage.getItem('fitboard.theme'));
+      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-logo" data-icon="activity"></span>
+        <span class="brand-name">FitBoard</span>
+      </div>
+
+      <nav class="nav" aria-label="Hauptnavigation">
+        <a href="#overview" class="nav-link active" data-section="overview">
+          <span data-icon="dashboard"></span><span class="nav-text">Übersicht</span>
+        </a>
+        <a href="#stats" class="nav-link" data-section="stats">
+          <span data-icon="chart"></span><span class="nav-text">Statistiken</span>
+        </a>
+        <a href="#plans" class="nav-link" data-section="plans">
+          <span data-icon="clipboard"></span><span class="nav-text">Trainingspläne</span>
+        </a>
+        <a href="#nutrition" class="nav-link" data-section="nutrition">
+          <span data-icon="apple"></span><span class="nav-text">Ernährung</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="goal-card">
+          <p class="goal-card-title">Tagesziele</p>
+          <ul class="goal-list" id="goalList"></ul>
+        </div>
+        <button class="nav-link" id="settingsBtnSide" type="button">
+          <span data-icon="sliders"></span><span class="nav-text">Einstellungen</span>
+        </button>
+        <button class="nav-link theme-toggle" id="themeToggle" type="button">
+          <span data-icon="moon" id="themeIcon"></span><span class="nav-text" id="themeText">Dunkelmodus</span>
+        </button>
+      </div>
+    </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- ===================== HAUPTBEREICH ===================== -->
+    <main class="main">
+
+      <!-- Obere Leiste mit Filtern -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Menü öffnen">
+            <span data-icon="menu"></span>
+          </button>
+          <div class="topbar-title">
+            <p class="eyebrow" id="todayLabel"></p>
+            <h1 class="page-title" id="greeting">Hallo!</h1>
+          </div>
+        </div>
+
+        <button class="icon-btn settings-btn" id="settingsBtn" type="button" aria-label="Einstellungen">
+          <span data-icon="sliders"></span>
+        </button>
+
+        <div class="filters">
+          <div class="segmented" id="periodFilter" role="group" aria-label="Zeitraum filtern">
+            <button type="button" data-period="day">Tag</button>
+            <button type="button" data-period="week" class="active">Woche</button>
+            <button type="button" data-period="month">Monat</button>
+          </div>
+          <div class="period-nav">
+            <button class="icon-btn" id="prevPeriod" type="button" aria-label="Vorheriger Zeitraum">
+              <span data-icon="chevronLeft"></span>
+            </button>
+            <span class="period-label" id="periodLabel"></span>
+            <button class="icon-btn" id="nextPeriod" type="button" aria-label="Nächster Zeitraum">
+              <span data-icon="chevronRight"></span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+
+        <!-- ========== ÜBERSICHT ========== -->
+        <section id="overview" class="section">
+          <div class="section-head">
+            <div>
+              <h2>Übersicht</h2>
+              <p class="muted" id="overviewSub"></p>
+            </div>
+          </div>
+
+          <!-- Schnellaktionen -->
+          <div class="quick-actions" id="quickActions">
+            <button type="button" class="quick" data-quick="food"><span data-icon="apple"></span>Essen</button>
+            <button type="button" class="quick" data-quick="water"><span data-icon="droplet"></span>+250 ml</button>
+            <button type="button" class="quick" data-quick="weight"><span data-icon="scale"></span>Gewicht</button>
+            <button type="button" class="quick" data-quick="training"><span data-icon="clipboard"></span>Training</button>
+          </div>
+
+          <!-- Zusammenfassungs-Karten (werden per JS befüllt) -->
+          <div class="kpi-grid" id="kpiGrid"></div>
+
+          <div class="overview-grid">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Heute geplant</h3>
+                  <p class="muted" id="todayPlanSub"></p>
+                </div>
+                <div class="ring" id="todayRing"></div>
+              </div>
+              <div id="todayPlan"></div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Trainingsverteilung</h3>
+                  <p class="muted" id="shareSub">Minuten nach Trainingsart</p>
+                </div>
+              </div>
+              <div class="share-wrap">
+                <div class="chart-box chart-box--donut">
+                  <canvas id="shareChart" aria-label="Verteilung der Trainingsminuten"></canvas>
+                  <div class="donut-center" id="shareCenter"></div>
+                </div>
+                <ul class="legend-list" id="shareLegend"></ul>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ========== STATISTIKEN ========== -->
+        <section id="stats" class="section">
+          <div class="section-head">
+            <div>
+              <h2>Statistiken</h2>
+              <p class="muted">Aktivität, Fortschritt und Trends im gewählten Zeitraum</p>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="card span-2">
+              <div class="card-head">
+                <div>
+                  <h3>Tägliche Aktivität</h3>
+                  <p class="muted" id="activitySub"></p>
+                </div>
+                <div class="chart-legend" id="activityLegend"></div>
+              </div>
+              <div class="chart-box chart-box--tall">
+                <canvas id="activityChart" aria-label="Diagramm der täglichen Aktivität"></canvas>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Wöchentlicher Fortschritt</h3>
+                  <p class="muted">Ø pro Tag · letzte 8 Wochen</p>
+                </div>
+                <select class="select" id="metricSelect" aria-label="Kennzahl wählen">
+                  <option value="steps">Schritte</option>
+                  <option value="calories">Kalorien</option>
+                  <option value="workoutMin">Workoutzeit</option>
+                  <option value="sleep">Schlaf</option>
+                </select>
+              </div>
+              <div class="chart-box">
+                <canvas id="weeklyChart" aria-label="Wöchentlicher Fortschritt"></canvas>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Workout-Trends</h3>
+                  <p class="muted">Minuten pro Woche · abgeschlossene Wochen</p>
+                </div>
+                <div class="chart-legend" id="trendLegend"></div>
+              </div>
+              <div class="chart-box">
+                <canvas id="trendChart" aria-label="Workout-Trends nach Trainingsart"></canvas>
+              </div>
+            </article>
+
+            <article class="card span-2">
+              <div class="card-head">
+                <div>
+                  <h3>Kraftfortschritt</h3>
+                  <p class="muted">Arbeitsgewicht je Übung · Klick öffnet den Verlauf mit Vergleich nach Einheit, Woche und Monat</p>
+                </div>
+              </div>
+              <div class="strength-table" role="table" aria-label="Kraftfortschritt je Übung">
+                <div class="strength-row strength-head" role="row">
+                  <span role="columnheader">Übung</span>
+                  <span role="columnheader">Verlauf</span>
+                  <span role="columnheader">Aktuell</span>
+                  <span role="columnheader">4 Wochen</span>
+                  <span role="columnheader">Seit Start</span>
+                </div>
+                <div id="strengthRows"></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ========== TRAININGSPLÄNE ========== -->
+        <section id="plans" class="section" data-cat="gym">
+          <div class="section-head">
+            <div>
+              <h2>Trainingspläne</h2>
+              <p class="muted">Wähle Plan und Wochentag. Mit „Neuer Plan“ legst du eigene Pläne an, z. B. für Radfahren oder Schwimmen.</p>
+            </div>
+            <div class="section-actions">
+              <button class="btn btn-ghost" id="editPlanBtn" type="button" hidden>
+                <span data-icon="pencil"></span>Plan bearbeiten
+              </button>
+              <button class="btn btn-ghost" id="resetPlanBtn" type="button">
+                <span data-icon="reset"></span>Zurücksetzen
+              </button>
+              <button class="btn btn-primary" id="addExerciseBtn" type="button">
+                <span data-icon="plus"></span>Eintrag hinzufügen
+              </button>
+            </div>
+          </div>
+
+          <div class="tabs" id="planTabs" role="tablist" aria-label="Trainingsart"></div>
+          <p class="plan-desc" id="planDesc"></p>
+
+          <div class="day-grid" id="dayGrid"></div>
+
+          <div class="plan-layout">
+            <article class="card plan-detail">
+              <div class="plan-detail-head">
+                <div class="plan-detail-title">
+                  <p class="eyebrow" id="planDayLabel"></p>
+                  <input class="focus-input" id="planFocus" type="text" maxlength="50"
+                         placeholder="Fokus des Tages, z. B. Oberkörper" aria-label="Fokus des Tages" />
+                </div>
+                <span class="pill" id="planSummary"></span>
+              </div>
+              <ol class="exercise-list" id="exerciseList"></ol>
+              <button class="btn btn-dashed" id="addInlineBtn" type="button">
+                <span data-icon="plus"></span><span class="label">Übung zu diesem Tag hinzufügen</span>
+              </button>
+            </article>
+
+            <aside class="card plan-info" id="planInfo"></aside>
+          </div>
+        </section>
+
+
+        <!-- ========== ERNÄHRUNG ========== -->
+        <section id="nutrition" class="section">
+          <div class="section-head">
+            <div>
+              <h2>Ernährung</h2>
+              <p class="muted">Tagesbedarf, Tagebuch und Trends, abgestimmt auf dein Training.</p>
+            </div>
+            <div class="section-actions">
+              <div class="segmented" id="goalFilter" role="group" aria-label="Ernährungsziel">
+                <button type="button" data-goal="gain">Muskelaufbau</button>
+                <button type="button" data-goal="maintain">Halten</button>
+                <button type="button" data-goal="lose">Abnehmen</button>
+              </div>
+              <button class="btn btn-ghost" id="profileBtn" type="button"><span data-icon="user"></span>Profil</button>
+              <button class="btn btn-primary" id="addFoodBtn" type="button"><span data-icon="plus"></span>Essen eintragen</button>
+            </div>
+          </div>
+
+          <div class="day-switch">
+            <button class="icon-btn" id="prevNutritionDay" type="button" aria-label="Vorheriger Tag"><span data-icon="chevronLeft"></span></button>
+            <span class="period-label" id="nutritionDayLabel">Heute</span>
+            <button class="icon-btn" id="nextNutritionDay" type="button" aria-label="Nächster Tag"><span data-icon="chevronRight"></span></button>
+          </div>
+
+          <!-- Tagesziele (werden per JS befüllt) -->
+          <div class="kpi-grid" id="nutritionKpis"></div>
+
+          <div class="nutrition-grid">
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Tagebuch</h3>
+                  <p class="muted">Exakt in Gramm, per Portion oder Favorit mit einem Klick</p>
+                </div>
+              </div>
+              <div class="diary" id="diaryList"></div>
+            </article>
+
+            <div class="nutrition-side">
+              <article class="card" id="fuelCard"></article>
+              <article class="card">
+                <div class="extras" id="nutritionExtras"></div>
+              </article>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="card span-2">
+              <div class="card-head">
+                <div>
+                  <h3>Kalorien: gegessen vs. Ziel</h3>
+                  <p class="muted" id="balanceSub"></p>
+                </div>
+                <div class="chart-legend">
+                  <span><i class="swatch" style="background:var(--c-kcal)"></i>Gegessen</span>
+                  <span><i class="swatch line" style="background:var(--text)"></i>Ziel</span>
+                </div>
+              </div>
+              <div class="chart-box">
+                <canvas id="nutritionChart" aria-label="Kalorien gegessen im Vergleich zum Ziel"></canvas>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Makroverteilung</h3>
+                  <p class="muted">Ø pro erfasstem Tag im gewählten Zeitraum</p>
+                </div>
+              </div>
+              <div class="share-wrap">
+                <div class="chart-box chart-box--donut">
+                  <canvas id="macroChart" aria-label="Verteilung von Protein, Kohlenhydraten und Fett"></canvas>
+                  <div class="donut-center" id="macroCenter"></div>
+                </div>
+                <ul class="legend-list" id="macroLegend"></ul>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Körpergewicht</h3>
+                  <p class="muted">Letzte 12 Wochen · Linie = Ø 7 Tage</p>
+                </div>
+                <div class="body-stats" id="bodyStats"></div>
+              </div>
+              <div class="chart-box chart-box--body">
+                <canvas id="bodyChart" aria-label="Verlauf des Körpergewichts"></canvas>
+              </div>
+              <form class="body-form" id="bodyForm">
+                <label class="field" for="bodyDate"><span>Datum</span><input id="bodyDate" name="date" type="date" required /></label>
+                <label class="field" for="bodyKg"><span>Gewicht (kg)</span><input id="bodyKg" name="kg" type="number" min="20" max="400" step="0.1" inputmode="decimal" required placeholder="z. B. 78,4" /></label>
+                <button type="submit" class="btn btn-primary"><span data-icon="plus"></span>Eintragen</button>
+              </form>
+              <ul class="entry-list" id="bodyEntries"></ul>
+            </article>
+          </div>
+
+          <p class="info-note nutrition-note">Richtwerte nach ISSN (Protein), ACSM/DGE (Kohlenhydrate) und DGE (Ballaststoffe). Lebensmittelwerte sind Näherungen, bei Bedarf die Packungsangabe übernehmen. Kein Ersatz für eine individuelle Ernährungsberatung.</p>
+        </section>
+
+        <footer class="footer muted">
+          FitBoard · Beispieldaten · Pläne werden lokal in deinem Browser gespeichert.
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===================== NAVIGATION UNTEN (Smartphone) ===================== -->
+  <nav class="bottom-nav" id="bottomNav" aria-label="Bereiche">
+    <button type="button" data-view="overview"><span data-icon="dashboard"></span>Heute</button>
+    <button type="button" data-view="plans"><span data-icon="clipboard"></span>Training</button>
+    <button type="button" data-view="nutrition"><span data-icon="apple"></span>Ernährung</button>
+    <button type="button" data-view="stats"><span data-icon="chart"></span>Statistik</button>
+  </nav>
+
+  <!-- ===================== MODAL: Übung ===================== -->
+  <dialog class="modal" id="exerciseModal" aria-labelledby="modalTitle">
+    <form id="exerciseForm" class="modal-body">
+      <div class="modal-head">
+        <h3 id="modalTitle">Übung hinzufügen</h3>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen"><span data-icon="close"></span></button>
+      </div>
+
+      <label class="field" for="exerciseName">
+        <span id="exerciseNameLabel">Übung</span>
+        <input id="exerciseName" name="name" type="text" required maxlength="60" placeholder="z. B. Bankdrücken" />
+      </label>
+
+      <div class="field-row">
+        <label class="field" for="exerciseCategory">
+          <span>Plan</span>
+          <select id="exerciseCategory" name="category" class="select"></select>
+        </label>
+        <label class="field" for="exerciseDay">
+          <span>Wochentag</span>
+          <select id="exerciseDay" name="day" class="select"></select>
+        </label>
+      </div>
+
+      <!-- Felder je nach Sportart (werden per JS aus sports.js erzeugt) -->
+      <div class="dyn-fields" id="exerciseFields"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Plan anlegen / bearbeiten ===================== -->
+  <dialog class="modal" id="planModal" aria-labelledby="planModalTitle">
+    <form id="planForm" class="modal-body">
+      <div class="modal-head">
+        <h3 id="planModalTitle">Neuen Plan anlegen</h3>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen"><span data-icon="close"></span></button>
+      </div>
+
+      <label class="field" for="planName">
+        <span>Name des Plans</span>
+        <input id="planName" name="label" type="text" required maxlength="24" placeholder="z. B. Rennrad" />
+      </label>
+
+      <fieldset class="field fieldset">
+        <legend>Sportart</legend>
+        <div class="type-grid" id="planTypeGrid"></div>
+        <p class="type-hint" id="planTypeHint"></p>
+      </fieldset>
+
+      <fieldset class="field fieldset">
+        <legend>Farbe</legend>
+        <div class="swatches" id="planColorGrid"></div>
+      </fieldset>
+
+      <label class="field" for="planGoal">
+        <span>Ziel / Beschreibung <em>(optional)</em></span>
+        <input id="planGoal" name="description" type="text" maxlength="140" placeholder="z. B. 100-km-Ausfahrt im Mai" />
+      </label>
+
+      <label class="check-row" id="planTemplateRow" for="planTemplate">
+        <input id="planTemplate" name="template" type="checkbox" checked />
+        <span class="label">Mit Beispielwoche starten</span>
+      </label>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost btn-danger-ghost" id="deletePlanBtn" hidden>
+          <span data-icon="trash"></span>Plan löschen
+        </button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-ghost" data-close>Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Gewichtsverlauf ===================== -->
+  <dialog class="modal modal--wide" id="weightModal" aria-labelledby="weightTitle" data-cat="gym">
+    <div class="modal-body">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Gewichtsverlauf</p>
+          <h3 id="weightTitle">Übung</h3>
+          <p class="muted" id="weightSub"></p>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen"><span data-icon="close"></span></button>
+      </div>
+
+      <div class="weight-toolbar">
+        <span class="muted">Vergleichen nach</span>
+        <div class="segmented" id="weightInterval" role="group" aria-label="Intervall wählen">
+          <button type="button" data-interval="session" class="active">Einheit</button>
+          <button type="button" data-interval="week">Woche</button>
+          <button type="button" data-interval="month">Monat</button>
+        </div>
+      </div>
+
+      <div class="weight-stats" id="weightStats"></div>
+
+      <div>
+        <p class="muted" id="weightChartSub"></p>
+        <div class="chart-box chart-box--weight">
+          <canvas id="weightChart" aria-label="Gewichtsverlauf der Übung"></canvas>
+        </div>
+      </div>
+
+      <div class="weight-bottom">
+        <form class="weight-form" id="weightForm">
+          <p class="weight-form-title">Neuen Eintrag hinzufügen</p>
+          <div class="weight-form-fields">
+            <label class="field">
+              <span>Datum</span>
+              <input id="weightDate" name="date" type="date" required />
+            </label>
+            <label class="field">
+              <span>Gewicht (kg)</span>
+              <input id="weightValue" name="weight" type="number" min="0.5" max="1000" step="0.5" inputmode="decimal" required />
+            </label>
+            <label class="field">
+              <span>Wdh.</span>
+              <input id="weightReps" name="reps" type="text" maxlength="20" />
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary"><span data-icon="plus"></span>Eintragen</button>
+        </form>
+        <div>
+          <p class="weight-form-title">Letzte Einträge</p>
+          <ul class="entry-list" id="weightEntries"></ul>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ===================== MODAL: Ernährungsprofil ===================== -->
+  <dialog class="modal" id="profileModal" aria-labelledby="profileTitle">
+    <form id="profileForm" class="modal-body">
+      <div class="modal-head">
+        <h3 id="profileTitle">Ernährungsprofil</h3>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen"><span data-icon="close"></span></button>
+      </div>
+      <div class="field-row">
+        <label class="field" for="profileSex"><span>Formel für</span>
+          <select id="profileSex" name="sex" class="select"><option value="m">Männer</option><option value="f">Frauen</option></select></label>
+        <label class="field" for="profileAge"><span>Alter</span>
+          <input id="profileAge" name="age" type="number" min="14" max="100" required /></label>
+      </div>
+      <div class="field-row">
+        <label class="field" for="profileHeight"><span>Größe (cm)</span>
+          <input id="profileHeight" name="height" type="number" min="120" max="230" required /></label>
+        <label class="field" for="profileGoal"><span>Ziel</span>
+          <select id="profileGoal" name="goal" class="select">
+            <option value="gain">Muskelaufbau</option><option value="maintain">Gewicht halten</option><option value="lose">Abnehmen</option>
+          </select></label>
+      </div>
+      <label class="field" for="profileProtein"><span>Protein (g pro kg) <em>(optional, leer = Standard des Ziels)</em></span>
+        <input id="profileProtein" name="proteinPerKg" type="number" min="0.8" max="3.5" step="0.1" inputmode="decimal" /></label>
+      <p class="type-hint" id="profilePreview"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===================== MODAL: Essen eintragen ===================== -->
+  <dialog class="modal modal--wide" id="foodModal" aria-labelledby="foodTitle">
+    <div class="modal-body">
+      <div class="modal-head">
+        <div>
+          <h3 id="foodTitle">Essen eintragen</h3>
+          <p class="muted" id="foodDate"></p>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen"><span data-icon="close"></span></button>
+      </div>
+
+      <div class="food-toolbar">
+        <label class="field" for="foodMeal"><span>Mahlzeit</span><select id="foodMeal" class="select"></select></label>
+        <div class="segmented" id="foodTabs" role="group" aria-label="Art der Eingabe">
+          <button type="button" data-tab="search" class="active">Lebensmittel</button>
+          <button type="button" data-tab="quick">Schnell eintragen</button>
+          <button type="button" data-tab="create">Neues Lebensmittel</button>
+        </div>
+      </div>
+
+      <!-- Lebensmittel suchen / Favoriten -->
+      <div data-panel="search" class="food-panel">
+        <div>
+          <p class="weight-form-title">Favoriten · ein Klick trägt eine Portion ein</p>
+          <div class="fav-chips" id="favoriteChips"></div>
+        </div>
+        <div class="food-pick-grid">
+          <div class="food-search">
+            <label class="search-field" for="foodSearch">
+              <span data-icon="search"></span>
+              <input id="foodSearch" type="search" placeholder="Lebensmittel suchen …" autocomplete="off" />
+            </label>
+            <ul class="food-list" id="foodList"></ul>
+          </div>
+          <div class="selected-food" id="selectedFood"></div>
+        </div>
+      </div>
+
+      <!-- Schnell eintragen -->
+      <form data-panel="quick" class="food-panel" id="quickForm" hidden>
+        <p class="muted">Für Essen ohne genaue Angaben, z. B. im Restaurant. Nur die Kalorien sind Pflicht.</p>
+        <label class="field" for="quickName"><span>Bezeichnung</span><input id="quickName" name="name" type="text" maxlength="60" placeholder="z. B. Mittagessen Kantine" /></label>
+        <div class="macro-fields">
+          <label class="field" for="quickKcal"><span>Kalorien</span><input id="quickKcal" name="kcal" type="number" min="1" max="5000" required inputmode="decimal" /></label>
+          <label class="field" for="quickProtein"><span>Protein (g)</span><input id="quickProtein" name="protein" type="number" min="0" max="500" step="0.1" inputmode="decimal" /></label>
+          <label class="field" for="quickCarbs"><span>Kohlenh. (g)</span><input id="quickCarbs" name="carbs" type="number" min="0" max="800" step="0.1" inputmode="decimal" /></label>
+          <label class="field" for="quickFat"><span>Fett (g)</span><input id="quickFat" name="fat" type="number" min="0" max="400" step="0.1" inputmode="decimal" /></label>
+          <label class="field" for="quickFiber"><span>Ballastst. (g)</span><input id="quickFiber" name="fiber" type="number" min="0" max="100" step="0.1" inputmode="decimal" /></label>
+        </div>
+        <button type="submit" class="btn btn-primary"><span data-icon="plus"></span>Eintragen</button>
+      </form>
+
+      <!-- Neues Lebensmittel -->
+      <form data-panel="create" class="food-panel" id="createFoodForm" hidden>
+        <label class="field" for="newFoodName"><span>Name</span><input id="newFoodName" name="name" type="text" required maxlength="60" placeholder="z. B. Proteinbrot" /></label>
+        <p class="weight-form-title">Nährwerte pro 100 g (Packungsangabe)</p>
+        <div class="macro-fields">
+          <label class="field" for="newKcal"><span>Kalorien</span><input id="newKcal" name="kcal" type="number" min="0" max="900" required inputmode="decimal" /></label>
+          <label class="field" for="newProtein"><span>Protein (g)</span><input id="newProtein" name="protein" type="number" min="0" max="100" step="0.1" required inputmode="decimal" /></label>
+          <label class="field" for="newCarbs"><span>Kohlenh. (g)</span><input id="newCarbs" name="carbs" type="number" min="0" max="100" step="0.1" required inputmode="decimal" /></label>
+          <label class="field" for="newFat"><span>Fett (g)</span><input id="newFat" name="fat" type="number" min="0" max="100" step="0.1" required inputmode="decimal" /></label>
+          <label class="field" for="newFiber"><span>Ballastst. (g)</span><input id="newFiber" name="fiber" type="number" min="0" max="100" step="0.1" inputmode="decimal" /></label>
+        </div>
+        <div class="field-row">
+          <label class="field" for="newPortionLabel"><span>Portion <em>(optional)</em></span><input id="newPortionLabel" name="portionLabel" type="text" maxlength="20" placeholder="z. B. Scheibe" /></label>
+          <label class="field" for="newPortionGrams"><span>Gramm pro Portion</span><input id="newPortionGrams" name="portionGrams" type="number" min="1" max="2000" inputmode="decimal" placeholder="z. B. 45" /></label>
+        </div>
+        <label class="check-row" for="newFavorite"><input id="newFavorite" name="favorite" type="checkbox" checked /><span class="label">Als Favorit speichern</span></label>
+        <button type="submit" class="btn btn-primary">Speichern &amp; auswählen</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ===================== MODAL: Einstellungen ===================== -->
+  <dialog class="modal" id="settingsModal" aria-labelledby="settingsTitle">
+    <div class="modal-body">
+      <div class="modal-head">
+        <h3 id="settingsTitle">Einstellungen</h3>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen"><span data-icon="close"></span></button>
+      </div>
+
+      <div class="setting">
+        <div>
+          <strong>Farbschema</strong>
+          <p class="muted">Aktuell: <span id="settingsThemeLabel">Hell</span></p>
+        </div>
+        <button type="button" class="btn btn-ghost" id="settingsTheme"><span data-icon="moon"></span>Wechseln</button>
+      </div>
+
+      <div class="setting setting--stack">
+        <div>
+          <strong>Als App installieren</strong>
+          <p class="muted" id="installStatus"></p>
+        </div>
+        <button type="button" class="btn btn-primary" id="installBtn" hidden><span data-icon="plus"></span>App installieren</button>
+      </div>
+
+      <div class="setting setting--stack">
+        <div>
+          <strong>Sicherung</strong>
+          <p class="muted">Deine Daten liegen nur auf diesem Gerät. Erstelle regelmäßig eine Sicherungsdatei, z. B. vor einem Handywechsel.</p>
+          <p class="muted" id="backupInfo"></p>
+        </div>
+        <div class="setting-actions">
+          <button type="button" class="btn btn-primary" id="exportBtn"><span data-icon="download"></span>Sicherung erstellen</button>
+          <label class="btn btn-ghost" for="importInput"><span data-icon="upload"></span>Wiederherstellen</label>
+          <input type="file" id="importInput" accept="application/json,.json" class="visually-hidden" />
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ===================== MODAL: Bestätigung ===================== -->
+  <dialog class="modal modal--small" id="confirmModal" aria-labelledby="confirmTitle">
+    <form method="dialog" class="modal-body">
+      <h3 id="confirmTitle">Bist du sicher?</h3>
+      <p class="muted" id="confirmText"></p>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-ghost" value="cancel" id="confirmCancel">Abbrechen</button>
+        <button type="submit" class="btn btn-danger" value="ok" id="confirmOk">Löschen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Chart.js (Diagramm-Bibliothek) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Eigene Skripte – Reihenfolge ist wichtig! -->
+  <script src="js/utils.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/sports.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/plans.js"></script>
+  <script src="js/nutrition-data.js"></script>
+  <script src="js/nutrition.js"></script>
+  <script src="js/mobile.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
