@@ -6,7 +6,7 @@
    Bei neuen Dateien: Liste APP_FILES ergänzen und VERSION erhöhen.
    ========================================================== */
 
-const VERSION = 'fitboard-v1';
+const VERSION = 'fitboard-v3';
 
 const APP_FILES = [
   './',

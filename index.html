@@ -8,18 +8,17 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#0e1116" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="FitBoard" />
   <title>FitBoard</title>
 
   <!-- Schriftart -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <!-- Eigene Styles -->
   <link rel="stylesheet" href="css/style.css" />
@@ -111,7 +110,7 @@
 
       <div class="content">
 
-        <!-- ========== ÜBERSICHT ========== -->
+        <!-- ========== ÜBERSICHT / HEUTE ========== -->
         <section id="overview" class="section">
           <div class="section-head">
             <div>
@@ -119,6 +118,9 @@
               <p class="muted" id="overviewSub"></p>
             </div>
           </div>
+
+          <!-- Zusammenfassung oben (folgt dem Filter Tag / Woche / Monat) -->
+          <div class="kpi-grid" id="kpiGrid"></div>
 
           <!-- Schnellaktionen -->
           <div class="quick-actions" id="quickActions">
@@ -128,37 +130,68 @@
             <button type="button" class="quick" data-quick="training"><span data-icon="clipboard"></span>Training</button>
           </div>
 
-          <!-- Zusammenfassungs-Karten (werden per JS befüllt) -->
-          <div class="kpi-grid" id="kpiGrid"></div>
+          <div class="today-grid">
+            <!-- Linke Spalte: Plakat-Bühne mit dem heutigen Training -->
+            <div class="today-col">
+              <article class="card stage" id="stage" aria-labelledby="posterTitle"></article>
 
-          <div class="overview-grid">
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <h3>Heute geplant</h3>
-                  <p class="muted" id="todayPlanSub"></p>
+              <article class="card" id="ladderCard" aria-labelledby="ladderTitle">
+                <div class="card-head">
+                  <h3 id="ladderTitle">Comeback-Leiter</h3>
+                  <span class="pill" id="ladderStage"></span>
                 </div>
-                <div class="ring" id="todayRing"></div>
-              </div>
-              <div id="todayPlan"></div>
-            </article>
+                <div class="ladder" id="ladder"></div>
+                <div class="ladder-lbl mono-sm" id="ladderLbl"></div>
+                <div class="ladder-info">
+                  <span>Schmerz zuletzt <b id="painNow"></b></span>
+                  <span class="muted" id="ladderHint"></span>
+                  <div class="ladder-actions">
+                    <button type="button" class="icon-btn" id="ladderDown" aria-label="Eine Stufe zurück"><span data-icon="chevronLeft"></span></button>
+                    <button type="button" class="icon-btn" id="ladderUp" aria-label="Eine Stufe weiter"><span data-icon="chevronRight"></span></button>
+                  </div>
+                </div>
+              </article>
+            </div>
 
-            <article class="card">
-              <div class="card-head">
-                <div>
-                  <h3>Trainingsverteilung</h3>
-                  <p class="muted" id="shareSub">Minuten nach Trainingsart</p>
+            <!-- Rechte Spalte: Instrumente -->
+            <div class="today-col">
+              <article class="card" aria-labelledby="ringTitle">
+                <div class="card-head">
+                  <h3 id="ringTitle">Tagesziele</h3>
+                  <span class="pill" id="ringNote"></span>
                 </div>
-              </div>
-              <div class="share-wrap">
-                <div class="chart-box chart-box--donut">
-                  <canvas id="shareChart" aria-label="Verteilung der Trainingsminuten"></canvas>
-                  <div class="donut-center" id="shareCenter"></div>
+                <div class="rings">
+                  <svg viewBox="0 0 160 160" role="img" aria-labelledby="ringTitle" id="ringSvg"></svg>
+                  <ul class="ring-legend" id="ringLegend"></ul>
                 </div>
-                <ul class="legend-list" id="shareLegend"></ul>
-              </div>
-            </article>
+              </article>
+
+              <article class="card" aria-labelledby="loadTitle">
+                <div class="card-head">
+                  <div>
+                    <h3 id="loadTitle">Belastung</h3>
+                    <p class="muted" id="loadSub"></p>
+                  </div>
+                </div>
+                <div class="zonebar" id="zonebar"></div>
+                <div class="zone-legend mono-sm" id="zoneLegend"></div>
+                <div class="week-bars" id="weekBars"></div>
+                <div class="week-lbl mono-sm" id="weekLbl"></div>
+              </article>
+
+              <article class="card" aria-labelledby="heatTitle">
+                <div class="card-head">
+                  <h3 id="heatTitle">Kontinuität</h3>
+                  <span class="pill" id="heatNote"></span>
+                </div>
+                <div class="heat" id="heat"></div>
+                <div class="heat-scale mono-sm">
+                  <span>weniger</span><i style="background:var(--surface-2)"></i><i style="background:var(--z1)"></i><i style="background:var(--z2)"></i><i style="background:var(--z3)"></i><i style="background:var(--z4)"></i><i style="background:var(--z5)"></i><span>mehr</span>
+                </div>
+              </article>
+            </div>
           </div>
+          <p class="mono-sm">Zonen sind aus der Trainingsart geschätzt, bis echte Pulsdaten importiert werden.</p>
         </section>
 
         <!-- ========== STATISTIKEN ========== -->
@@ -218,6 +251,22 @@
             <article class="card span-2">
               <div class="card-head">
                 <div>
+                  <h3>Trainingsverteilung</h3>
+                  <p class="muted" id="shareSub">Minuten nach Trainingsart im gewählten Zeitraum</p>
+                </div>
+              </div>
+              <div class="share-wrap">
+                <div class="chart-box chart-box--donut">
+                  <canvas id="shareChart" aria-label="Verteilung der Trainingsminuten"></canvas>
+                  <div class="donut-center" id="shareCenter"></div>
+                </div>
+                <ul class="legend-list" id="shareLegend"></ul>
+              </div>
+            </article>
+
+            <article class="card span-2">
+              <div class="card-head">
+                <div>
                   <h3>Kraftfortschritt</h3>
                   <p class="muted">Arbeitsgewicht je Übung · Klick öffnet den Verlauf mit Vergleich nach Einheit, Woche und Monat</p>
                 </div>
@@ -267,7 +316,7 @@
                 <div class="plan-detail-title">
                   <p class="eyebrow" id="planDayLabel"></p>
                   <input class="focus-input" id="planFocus" type="text" maxlength="50"
-                         placeholder="Fokus des Tages, z. B. Oberkörper" aria-label="Fokus des Tages" />
+                         placeholder="Fokus des Tages" aria-label="Fokus des Tages" />
                 </div>
                 <span class="pill" id="planSummary"></span>
               </div>

@@ -79,6 +79,9 @@ function render() {
   renderActivity(range);
   renderWeekly(range);
   renderTrend(range);
+  renderLoad(range);
+  renderHeat(range);
+  renderRings();
   Nutrition.renderCharts(range);
 }
 
@@ -362,78 +365,264 @@ function renderPainChart() {
   });
 }
 
-/* ---------- Heute geplant (Checkliste) ---------- */
+/* ==========================================================
+   Heute: Plakat-Bühne, Tagesziele, Belastung, Kontinuität, Comeback-Leiter
+   ========================================================== */
+const ZONES = ['z1', 'z2', 'z3', 'z4', 'z5'];
+
+/** Hauptzone einer Trainingsart (geschätzt, bis echte Pulsdaten kommen) */
+function zoneOfCategory(key) {
+  const fixed = { mobility: 'z1', comeback: 'z2', gym: 'z4' };
+  if (fixed[key]) return fixed[key];
+  const byType = { cycling: 'z2', running: 'z2', swimming: 'z2', strength: 'z4', mobility: 'z1', other: 'z3' };
+  return byType[CATEGORIES[key].type] || 'z3';
+}
+
+/** Minuten eines Tages je Zone (Kraft verteilt sich auf Z3–Z5) */
+function zoneMinutes(record) {
+  const out = { z1: 0, z2: 0, z3: 0, z4: 0, z5: 0 };
+  if (!record) return out;
+  const { gym, mobility, comeback } = record.workouts;
+  out.z1 += mobility;
+  out.z2 += comeback;
+  out.z3 += Math.round(gym * 0.35);
+  out.z4 += Math.round(gym * 0.55);
+  out.z5 += Math.round(gym * 0.1);
+  return out;
+}
+
+/* ---------- Plakat-Bühne ---------- */
 function doneStorageKey() {
   return `fitboard.done.${DateUtils.toKey(TODAY)}`;
 }
 
-function renderTodayPlan() {
+/** Heutige Einheiten: Hauptsportart (meiste Minuten) zuerst */
+function todaySessions() {
   const dayKey = DateUtils.weekdayKey(TODAY);
+  const sessions = Object.keys(CATEGORIES)
+    .map((cat) => {
+      const plan = Plans.data[cat][dayKey];
+      const minutes = plan.exercises.reduce((sum, e) => sum + sportTypeOf(cat).minutes(e), 0);
+      return { cat, plan, minutes };
+    })
+    .filter((s) => s.plan.exercises.length);
+  return sessions.sort((a, b) => b.minutes - a.minutes);
+}
+
+/** Knappe Mengenangabe fürs Plakat: „4×8“, „10×100 m“, „45 min“ */
+function compactDose(cat, e) {
+  const type = CATEGORIES[cat].type;
+  if (type === 'swimming') return `${e.reps || 1}×${e.distanceM} m`;
+  if (['cycling', 'running', 'other'].includes(type)) return e.duration ? `${e.duration} min` : '';
+  return `${e.sets}×${e.reps}`;
+}
+
+function renderTodayPlan() {
+  const stage = document.getElementById('stage');
+  const weekday = WEEKDAYS.find((d) => d.key === DateUtils.weekdayKey(TODAY)).long;
+  const sessions = todaySessions();
   const done = new Set(Storage.get(doneStorageKey(), []));
-  const container = document.getElementById('todayPlan');
 
-  const groups = Object.entries(CATEGORIES)
-    .map(([key, cat]) => ({ key, cat, plan: Plans.data[key][dayKey] }))
-    .filter((g) => g.plan.exercises.length);
-
-  const allIds = groups.flatMap((g) => g.plan.exercises.map((e) => e.id));
-  const doneCount = allIds.filter((id) => done.has(id)).length;
-  const weekday = WEEKDAYS.find((d) => d.key === dayKey).long;
-
-  document.getElementById('todayPlanSub').textContent = allIds.length
-    ? `${weekday} · ${doneCount} von ${allIds.length} Übungen erledigt`
-    : `${weekday} · Ruhetag`;
-
-  renderRing(allIds.length ? doneCount / allIds.length : 0);
-
-  if (!groups.length) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-icon">${icon('coffee')}</span>
-        <strong>Heute ist Ruhetag</strong>
-        <span class="muted">Regeneration gehört zum Training dazu.</span>
-      </div>`;
+  if (!sessions.length) {
+    stage.dataset.cat = 'mobility';
+    stage.innerHTML = `
+      <div class="poster">
+        <span class="eyebrow">Regeneration gehört zum Training</span>
+        <span class="zone-tag">Z1</span>
+        <h3 id="posterTitle">${weekday}.<br>Ruhetag.</h3>
+        <p class="poster-sub">Locker bewegen, gut schlafen, Protein verteilen.</p>
+      </div>
+      <button type="button" class="start-bar" data-go="plans"><span>Trainingsplan öffnen</span><span>keine Einheit geplant</span></button>`;
     return;
   }
 
-  container.innerHTML = `<div class="today-groups">${groups
-    .map(
-      (g) => `
-      <div data-cat="${g.key}">
-        <p class="today-group-title"><span class="dot"></span>${g.cat.label}
-          <span class="muted">· ${escapeHtml(g.plan.focus || g.cat.subtitle)}</span></p>
-        <ul class="check-list">
-          ${g.plan.exercises
-            .map(
-              (e) => `
-            <li>
-              <label class="check-item ${done.has(e.id) ? 'done' : ''}">
-                <input type="checkbox" data-id="${e.id}" ${done.has(e.id) ? 'checked' : ''} />
-                <span class="check-box">${icon('check')}</span>
-                <span class="check-text">
-                  <strong>${escapeHtml(e.name)}</strong>
-                  <span>${escapeHtml(exerciseShort(g.key, e))}</span>
-                </span>
-              </label>
-            </li>`
-            )
-            .join('')}
-        </ul>
-      </div>`
-    )
-    .join('')}</div>`;
+  const main = sessions[0];
+  const all = sessions.flatMap((s) => s.plan.exercises.map((e) => ({ ...e, cat: s.cat })));
+  const doneCount = all.filter((e) => done.has(e.id)).length;
+  const nextIndex = all.findIndex((e) => !done.has(e.id));
+  const totalMin = sessions.reduce((sum, s) => sum + s.minutes, 0);
+
+  stage.dataset.cat = main.cat;
+  stage.innerHTML = `
+    <div class="poster">
+      <span class="eyebrow">${sessions.length} ${sessions.length === 1 ? 'Einheit' : 'Einheiten'} · ca. ${Format.minutes(totalMin)}</span>
+      <span class="zone-tag">${zoneOfCategory(main.cat).toUpperCase()}</span>
+      <h3 id="posterTitle">${weekday}.<br>${escapeHtml(CATEGORIES[main.cat].label)}.</h3>
+      <p class="poster-sub">${escapeHtml(main.plan.focus || CATEGORIES[main.cat].subtitle)}</p>
+    </div>
+    <ol class="moves">
+      ${all
+        .map((e, i) => {
+          const isDone = done.has(e.id);
+          const isNext = i === nextIndex;
+          return `
+        <li data-cat="${e.cat}">
+          <button type="button" class="move${isDone ? ' done' : ''}${isNext ? ' next' : ''}" data-id="${e.id}"
+                  aria-pressed="${isDone}" aria-label="${escapeHtml(e.name)} ${isDone ? 'als offen markieren' : 'als erledigt markieren'}">
+            <span class="move-no">${String(i + 1).padStart(2, '0')}</span>
+            <span>
+              <span class="move-name">${escapeHtml(e.name)}${isNext ? '<span class="next-tag">als Nächstes</span>' : ''}</span>
+              <span class="move-meta"><span class="move-cat"></span>${escapeHtml(CATEGORIES[e.cat].label.toLowerCase())}${e.detail ? ` · ${escapeHtml(e.detail)}` : ''}</span>
+            </span>
+            <span class="move-dose">${escapeHtml(compactDose(e.cat, e))}</span>
+          </button>
+        </li>`;
+        })
+        .join('')}
+    </ol>
+    ${
+      nextIndex >= 0
+        ? `<button type="button" class="start-bar" data-complete="${all[nextIndex].id}">
+             <span>Übung ${String(nextIndex + 1).padStart(2, '0')} erledigt</span><span>${doneCount}/${all.length} geschafft</span>
+           </button>`
+        : `<button type="button" class="start-bar" data-go="stats"><span>Alles erledigt. Stark!</span><span>${all.length}/${all.length}</span></button>`
+    }`;
 }
 
-function renderRing(ratio) {
-  const r = 24;
-  const circumference = 2 * Math.PI * r;
-  document.getElementById('todayRing').innerHTML = `
-    <svg viewBox="0 0 56 56" aria-hidden="true">
-      <circle class="ring-bg" cx="28" cy="28" r="${r}"></circle>
-      <circle class="ring-fg" cx="28" cy="28" r="${r}"
-              stroke-dasharray="${circumference}" stroke-dashoffset="${circumference * (1 - ratio)}"></circle>
-    </svg>
-    <span class="ring-text">${Math.round(ratio * 100)}%</span>`;
+function toggleDone(id, force) {
+  const done = new Set(Storage.get(doneStorageKey(), []));
+  const makeDone = force ?? !done.has(id);
+  if (makeDone) done.add(id);
+  else done.delete(id);
+  Storage.set(doneStorageKey(), [...done]);
+  renderTodayPlan();
+}
+
+/* ---------- Tagesziele (Ringe) ---------- */
+function renderRings() {
+  const rec = getRecords(TODAY, TODAY)[0];
+  if (!rec) return;
+  const rings = [
+    { key: 'training', value: rec.workoutMin, goal: GOALS.workoutMin, fmt: (v) => `${v} min`, color: 'var(--c-workout)' },
+    { key: 'bewegung', value: rec.steps, goal: GOALS.steps, fmt: (v) => Format.number(v), color: 'var(--c-steps)' },
+    { key: 'erholung', value: rec.sleep, goal: GOALS.sleep, fmt: (v) => `${v.toLocaleString('de-DE')} h`, color: 'var(--c-sleep)' },
+  ];
+  const radii = [68, 52, 36];
+  const svg = document.getElementById('ringSvg');
+  svg.innerHTML = rings
+    .map((r, i) => {
+      const c = 2 * Math.PI * radii[i];
+      const pct = Math.min(r.value / r.goal, 1);
+      return `
+        <circle cx="80" cy="80" r="${radii[i]}" fill="none" stroke="var(--surface-2)" stroke-width="12"/>
+        <circle class="ring-fg" cx="80" cy="80" r="${radii[i]}" fill="none" stroke="${r.color}" stroke-width="12"
+          stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c}" data-target="${c * (1 - pct)}"
+          transform="rotate(-90 80 80)"/>`;
+    })
+    .join('');
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => svg.querySelectorAll('.ring-fg').forEach((el) => el.setAttribute('stroke-dashoffset', el.dataset.target)))
+  );
+
+  const reached = rings.filter((r) => r.value >= r.goal).length;
+  document.getElementById('ringNote').textContent = `heute · ${reached}/3 erreicht`;
+  document.getElementById('ringLegend').innerHTML = rings
+    .map(
+      (r) => `
+      <li><i style="background:${r.color}"></i>
+        <span><span class="mono-sm">${r.key}</span><b>${r.fmt(r.value)} <small>/ ${r.fmt(r.goal)}</small></b></span></li>`
+    )
+    .join('');
+}
+
+/* ---------- Belastung je Zone ---------- */
+function renderLoad(range) {
+  const end = range.end > TODAY ? TODAY : range.end;
+  const start = state.period === 'day' ? DateUtils.startOfWeek(range.start) : range.start;
+  const totals = { z1: 0, z2: 0, z3: 0, z4: 0, z5: 0 };
+  getRecords(start, end).forEach((r) => {
+    const z = zoneMinutes(r);
+    ZONES.forEach((k) => (totals[k] += z[k]));
+  });
+  const sum = ZONES.reduce((s, k) => s + totals[k], 0) || 1;
+
+  document.getElementById('loadSub').textContent =
+    state.period === 'month' ? `Minuten je Zone · ${Format.date(range.start, { month: 'long' })}` : `Minuten je Zone · KW ${DateUtils.isoWeek(start)}`;
+  document.getElementById('zonebar').innerHTML = ZONES.map(
+    (k) => `<div style="width:${(totals[k] / sum) * 100}%;background:var(--${k})" title="${k.toUpperCase()}: ${totals[k]} min"></div>`
+  ).join('');
+  document.getElementById('zoneLegend').innerHTML = ZONES.map((k) => `<span>${k}<b>${totals[k]}</b></span>`).join('');
+
+  // Tagesbalken der Woche, in der der Zeitraum endet
+  const monday = DateUtils.startOfWeek(end);
+  const days = WEEKDAYS.map((d, i) => {
+    const date = DateUtils.addDays(monday, i);
+    const z = date <= TODAY ? zoneMinutes(getRecords(date, date)[0]) : zoneMinutes(null);
+    return { d, date, z, total: ZONES.reduce((s, k) => s + z[k], 0) };
+  });
+  const max = Math.max(90, ...days.map((x) => x.total));
+  document.getElementById('weekBars').innerHTML = days
+    .map(
+      (x) => `
+      <div class="week-bar" title="${x.d.long}: ${x.total} min">
+        ${ZONES.slice()
+          .reverse()
+          .filter((k) => x.z[k])
+          .map((k) => `<div class="seg" style="height:${(x.z[k] / max) * 100}%;background:var(--${k})"></div>`)
+          .join('')}
+        ${x.total ? '' : '<div class="seg" style="height:3px;background:var(--border)"></div>'}
+      </div>`
+    )
+    .join('');
+  document.getElementById('weekLbl').innerHTML = days
+    .map((x) => `<span class="${DateUtils.isSameDay(x.date, TODAY) ? 'is-today' : ''}">${x.d.short.toLowerCase()}</span>`)
+    .join('');
+}
+
+/* ---------- Kontinuität: 12 Wochen als Kalender-Kästchen ---------- */
+function renderHeat(range) {
+  const end = range.end > TODAY ? TODAY : range.end;
+  const start = DateUtils.addDays(DateUtils.startOfWeek(end), -7 * 11);
+  const level = (m) => (!m ? null : m < 20 ? 'z1' : m < 45 ? 'z2' : m < 70 ? 'z3' : m < 95 ? 'z4' : 'z5');
+  let html = ['mo', '', 'mi', '', 'fr', '', 'so'].map((l) => `<span class="rowlbl">${l}</span>`).join('');
+  let active = 0;
+  for (let i = 0; i < 84; i++) {
+    const date = DateUtils.addDays(start, i);
+    const rec = date <= TODAY ? getRecords(date, date)[0] : null;
+    const lv = rec ? level(rec.workoutMin) : null;
+    if (lv) active++;
+    const label = `${Format.date(date, { day: 'numeric', month: 'short' })}: ${rec ? rec.workoutMin : 0} min`;
+    html += `<span class="cell" style="${date > TODAY ? 'opacity:.3;' : ''}${lv ? `background:var(--${lv})` : ''}" title="${label}"></span>`;
+  }
+  const heat = document.getElementById('heat');
+  heat.innerHTML = html;
+  heat.setAttribute('role', 'img');
+  heat.setAttribute('aria-label', `${active} Trainingstage in den letzten 12 Wochen`);
+  document.getElementById('heatNote').textContent = `${active} Trainingstage · 12 Wochen`;
+}
+
+/* ---------- Comeback-Leiter ---------- */
+const LADDER_KEY = 'fitboard.comeback.stage';
+const LADDER = [
+  { short: 'gehen', label: 'Zügig gehen 30 min' },
+  { short: 'g/l 1:2', label: 'Geh-Lauf 1 min laufen / 2 min gehen' },
+  { short: 'g/l 2:1', label: 'Geh-Lauf 2 min laufen / 1 min gehen' },
+  { short: 'lauf 10', label: '10 min am Stück laufen' },
+  { short: 'lauf 20', label: '20 min am Stück laufen' },
+  { short: 'lauf 30', label: '30 min am Stück laufen' },
+];
+
+function renderLadder() {
+  const stage = Storage.get(LADDER_KEY, 3);
+  document.getElementById('ladder').innerHTML = LADDER.map(
+    (s, i) =>
+      `<div class="ladder-step ${i + 1 < stage ? 'done' : i + 1 === stage ? 'now' : ''}" style="height:${28 + i * 12}%" title="Stufe ${i + 1}: ${s.label}"></div>`
+  ).join('');
+  document.getElementById('ladderLbl').innerHTML = LADDER.map((s) => `<span>${s.short}</span>`).join('');
+  document.getElementById('ladderStage').textContent = `Stufe ${stage} von ${LADDER.length}`;
+  document.getElementById('ladderHint').textContent =
+    stage < LADDER.length ? `Jetzt: ${LADDER[stage - 1].label}. Weiter nach 3 Einheiten mit Schmerz ≤ 2.` : 'Ziel erreicht: 30 min am Stück.';
+  const last = activityData.filter((r) => r.pain !== null).pop();
+  document.getElementById('painNow').textContent = last ? `${last.pain}/10` : '–';
+  document.getElementById('ladderDown').disabled = stage <= 1;
+  document.getElementById('ladderUp').disabled = stage >= LADDER.length;
+}
+
+function moveLadder(step) {
+  const stage = Math.min(LADDER.length, Math.max(1, Storage.get(LADDER_KEY, 3) + step));
+  Storage.set(LADDER_KEY, stage);
+  renderLadder();
+  showToast(`Comeback-Leiter: Stufe ${stage}`);
 }
 
 /* ---------- Sidebar: Tagesziele ---------- */
@@ -460,12 +649,12 @@ function renderGreeting() {
    ========================================================== */
 const Theme = {
   current() {
-    const set = document.documentElement.dataset.theme;
-    if (set) return set;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
   },
   updateButton() {
     const dark = this.current() === 'dark';
+    // Farbe der Statusleiste (Handy) an das Farbschema anpassen
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => (m.content = cssVar('--bg')));
     document.getElementById('themeIcon').innerHTML = icon(dark ? 'sun' : 'moon');
     document.getElementById('themeText').textContent = dark ? 'Hellmodus' : 'Dunkelmodus';
   },
@@ -550,21 +739,26 @@ function bindEvents() {
     renderWeekly(getRange(state.period, state.offset));
   });
 
-  // Checkliste "Heute geplant"
-  document.getElementById('todayPlan').addEventListener('change', (e) => {
-    if (!e.target.matches('input[type="checkbox"]')) return;
-    const done = new Set(Storage.get(doneStorageKey(), []));
-    if (e.target.checked) done.add(e.target.dataset.id);
-    else done.delete(e.target.dataset.id);
-    Storage.set(doneStorageKey(), [...done]);
-    renderTodayPlan();
+  // Plakat-Bühne: Übung antippen = erledigt/offen, Balken = nächste Übung erledigt
+  document.getElementById('stage').addEventListener('click', (e) => {
+    const move = e.target.closest('.move[data-id]');
+    if (move) return toggleDone(move.dataset.id);
+    const complete = e.target.closest('[data-complete]');
+    if (complete) {
+      toggleDone(complete.dataset.complete, true);
+      showToast('Übung erledigt');
+      return;
+    }
+    const go = e.target.closest('[data-go]');
+    if (go) Mobile.goTo(go.dataset.go);
   });
+
+  // Comeback-Leiter
+  document.getElementById('ladderUp').addEventListener('click', () => moveLadder(1));
+  document.getElementById('ladderDown').addEventListener('click', () => moveLadder(-1));
 
   // Hell / Dunkel
   document.getElementById('themeToggle').addEventListener('click', () => Theme.toggle());
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (!document.documentElement.dataset.theme) Theme.refresh();
-  });
 }
 
 /* ==========================================================
@@ -608,6 +802,7 @@ function init() {
   render();
   renderTodayPlan();
   renderStrength();
+  renderLadder();
   Mobile.init(); // Handy-Ansichten, Einstellungen, Offline-Modus
 }
 

@@ -9,13 +9,18 @@
 const Mobile = {
   VIEW_KEY: 'fitboard.view',
   BACKUP_KEY: 'fitboard.lastBackup',
-  query: window.matchMedia('(max-width: 760px)'),
+  // Gleiche Bedingung wie im CSS: schmal ODER Handy im Querformat
+  query: window.matchMedia('(max-width: 760px), (max-height: 500px) and (pointer: coarse)'),
   view: 'overview',
   installPrompt: null, // Android/Chrome: gespeichertes Installations-Angebot
 
   init() {
     this.view = Storage.get(this.VIEW_KEY, 'overview');
+    // Direktlink wie …/#plans hat Vorrang
+    const fromHash = location.hash.slice(1);
+    if (document.querySelector(`.section#${CSS.escape(fromHash || 'x')}`)) this.view = fromHash;
     if (!document.getElementById(this.view)) this.view = 'overview';
+    this.setupHistory();
 
     // Ansichten nur auf schmalen Bildschirmen
     this.applyLayout();
@@ -46,10 +51,50 @@ const Mobile = {
   /* ---------- Ansichten ---------- */
   applyLayout() {
     document.body.classList.toggle('app-views', this.isPhone());
-    this.showView(this.view, false);
+    this.showView(this.view, false, false);
   },
 
-  showView(view, scroll = true) {
+  /**
+   * Zurück-Taste / Wischgeste
+   * - Wechsel der Ansicht und jeder geöffnete Dialog erzeugen einen Verlaufseintrag
+   * - „Zurück“ schließt zuerst den obersten Dialog, dann geht es zur vorherigen Ansicht
+   */
+  setupHistory() {
+    this.ignoreNextPop = false;
+    history.replaceState({ view: this.view }, '');
+
+    document.querySelectorAll('dialog').forEach((dialog) => {
+      new MutationObserver(() => {
+        if (dialog.open) {
+          history.pushState({ view: this.view, dialog: dialog.id }, '');
+        } else if (history.state && history.state.dialog === dialog.id) {
+          // Per Knopf geschlossen → eigenen Verlaufseintrag wieder entfernen
+          this.ignoreNextPop = true;
+          history.back();
+        }
+      }).observe(dialog, { attributes: true, attributeFilter: ['open'] });
+    });
+
+    window.addEventListener('popstate', (e) => {
+      if (this.ignoreNextPop) {
+        this.ignoreNextPop = false;
+        return;
+      }
+      const open = document.querySelectorAll('dialog[open]');
+      if (open.length) {
+        open[open.length - 1].close();
+        return;
+      }
+      const view = (e.state && e.state.view) || location.hash.slice(1);
+      if (this.isPhone() && document.getElementById(view)) this.showView(view, true, false);
+    });
+  },
+
+  showView(view, scroll = true, addToHistory = true) {
+    // Neue Ansicht im Verlauf merken, damit „Zurück“ hierher zurückführt
+    if (addToHistory && this.isPhone() && view !== this.view && history.state && !history.state.dialog) {
+      history.pushState({ view }, '', `#${view}`);
+    }
     this.view = view;
     Storage.set(this.VIEW_KEY, view);
     document.body.dataset.view = view;

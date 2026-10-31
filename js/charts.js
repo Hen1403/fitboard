@@ -16,8 +16,8 @@ const Charts = {
   /** Globale Standardwerte an das aktuelle Farbschema anpassen */
   applyTheme() {
     if (!this.available()) return;
-    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
-    Chart.defaults.font.size = 12;
+    Chart.defaults.font.family = "'IBM Plex Mono', ui-monospace, monospace";
+    Chart.defaults.font.size = 11;
     Chart.defaults.color = cssVar('--text-muted');
     Chart.defaults.borderColor = cssVar('--grid');
   },

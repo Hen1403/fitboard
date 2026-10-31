@@ -7,130 +7,115 @@
    4. Responsive Anpassungen (Tablet & Mobile)
    ========================================================== */
 
-/* ---------- 1. Design-Tokens ---------- */
+/* ---------- 1. Design-Tokens ----------
+   Designsystem „Pulszonen × Plakat“:
+   - Dunkel ist Standard (wie eine Sportuhr), Hell per Umschalter
+   - Einziges Farbsystem: die fünf Trainingszonen Z1–Z5
+   - Schriften: Anton (Plakat), Barlow Condensed (Zahlen),
+     IBM Plex Mono (Beschriftungen), Barlow (Text)
+*/
 :root {
-  --bg: #f4f6fb;
-  --surface: #ffffff;
-  --surface-2: #f1f3f9;
-  --border: #e4e7f0;
-  --grid: #eef0f6;
-  --text: #141a2e;
-  --text-muted: #6a7190;
-  --accent: #5b5bd6;
-  --accent-contrast: #ffffff;
-  --accent-soft: #ecebff;
+  /* Flächen & Text */
+  --bg: #0e1116;
+  --surface: #161b23;
+  --surface-2: #1e2531;
+  --border: #2a3240;
+  --field-border: #687189; /* Rahmen von Eingabefeldern, mind. 3:1 */
+  --grid: #222a36;
+  --text: #eef1f6;
+  --text-muted: #96a0b2;
+  --ink: #120c06; /* Schrift auf kräftigen Zonenfarben */
+
+  /* Die fünf Trainingszonen */
+  --z1: #7488b4;
+  --z2: #35c98a;
+  --z3: #f2b33d;
+  --z4: #ff8a3d;
+  --z5: #ff5a4e;
+
+  /* Akzent = Zone 4 (Energie) */
+  --accent: var(--z4);
+  --accent-contrast: var(--ink);
+  --accent-soft: color-mix(in srgb, var(--z4) 16%, transparent);
 
   /* Kennzahlen */
-  --c-steps: #5b5bd6;
-  --c-kcal: #e5484d;
-  --c-workout: #12a594;
-  --c-sleep: #8e4ec6;
+  --c-steps: var(--z3);
+  --c-kcal: var(--z5);
+  --c-workout: var(--z4);
+  --c-sleep: var(--z2);
 
-  /* Trainingsarten */
-  --c-gym: #3e63dd;
-  --c-mobility: #0797b9;
-  --c-comeback: #ef6c00;
+  /* Trainingsarten (Zone, in der sie hauptsächlich stattfinden) */
+  --c-gym: var(--z4);
+  --c-mobility: var(--z1);
+  --c-comeback: var(--z2);
 
   /* Ernährung */
-  --c-protein: #c2368a;
-  --c-carbs: #b7791f;
-  --c-fat: #2f9e64;
-  --c-fiber: #7a5c3e;
-  --c-water: #1d7fe0;
-  --c-body: #4f6bed;
+  --c-protein: var(--z4);
+  --c-carbs: var(--z3);
+  --c-fat: var(--z2);
+  --c-fiber: #b3a184;
+  --c-water: var(--z1);
+  --c-body: var(--z1);
 
-  --success: #18924f;
-  --success-soft: #e3f6ea;
-  --warning: #c78a00;
-  --danger: #d93d42;
-  --danger-soft: #fdecec;
+  /* Status */
+  --success: #35c98a;
+  --success-soft: rgba(53, 201, 138, 0.14);
+  --warning: #f2b33d;
+  --danger: #ff6b62;
+  --danger-soft: rgba(255, 90, 78, 0.14);
 
-  --tooltip-bg: #141a2e;
-  --tooltip-text: #ffffff;
+  --tooltip-bg: #eef1f6;
+  --tooltip-text: #0e1116;
 
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
-  --shadow-lg: 0 20px 50px rgba(16, 24, 40, 0.18);
-  --radius: 18px;
+  /* Schriften */
+  --font-display: "Anton", "Barlow Condensed", Impact, sans-serif;
+  --font-num: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  --shadow: none;
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --radius: 20px;
   --radius-sm: 12px;
   --sidebar-w: 248px;
 
-  color-scheme: light;
-}
-
-/* Dunkles Farbschema (System-Einstellung) */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0d1017;
-    --surface: #151a25;
-    --surface-2: #1d2331;
-    --border: #262d3d;
-    --grid: #212838;
-    --text: #e9ecf5;
-    --text-muted: #949bb3;
-    --accent: #8d8ffc;
-    --accent-contrast: #0d1017;
-    --accent-soft: rgba(141, 143, 252, 0.15);
-    --c-steps: #8d8ffc;
-    --c-kcal: #ff6b6f;
-    --c-workout: #2ec4b0;
-    --c-sleep: #b77fe6;
-    --c-gym: #6e8dfb;
-    --c-mobility: #2bb8d9;
-    --c-comeback: #ff8a3d;
-    --c-protein: #f06ab8;
-    --c-carbs: #e8b04a;
-    --c-fat: #4cc38a;
-    --c-fiber: #c49a6c;
-    --c-water: #5aa9ff;
-    --c-body: #8b9dff;
-    --success: #3dd68c;
-    --success-soft: rgba(61, 214, 140, 0.14);
-    --warning: #f5b83d;
-    --danger: #ff6b6f;
-    --danger-soft: rgba(255, 107, 111, 0.14);
-    --tooltip-bg: #e9ecf5;
-    --tooltip-text: #0d1017;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
-    --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
-    color-scheme: dark;
-  }
-}
-
-/* Dunkles Farbschema (manuell per Button) */
-:root[data-theme="dark"] {
-  --bg: #0d1017;
-  --surface: #151a25;
-  --surface-2: #1d2331;
-  --border: #262d3d;
-  --grid: #212838;
-  --text: #e9ecf5;
-  --text-muted: #949bb3;
-  --accent: #8d8ffc;
-  --accent-contrast: #0d1017;
-  --accent-soft: rgba(141, 143, 252, 0.15);
-  --c-steps: #8d8ffc;
-  --c-kcal: #ff6b6f;
-  --c-workout: #2ec4b0;
-  --c-sleep: #b77fe6;
-  --c-gym: #6e8dfb;
-  --c-mobility: #2bb8d9;
-  --c-comeback: #ff8a3d;
-  --c-protein: #f06ab8;
-  --c-carbs: #e8b04a;
-  --c-fat: #4cc38a;
-  --c-fiber: #c49a6c;
-  --c-water: #5aa9ff;
-  --c-body: #8b9dff;
-  --success: #3dd68c;
-  --success-soft: rgba(61, 214, 140, 0.14);
-  --warning: #f5b83d;
-  --danger: #ff6b6f;
-  --danger-soft: rgba(255, 107, 111, 0.14);
-  --tooltip-bg: #e9ecf5;
-  --tooltip-text: #0d1017;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
+}
+
+/* Helles Farbschema (per Umschalter) */
+:root[data-theme="light"] {
+  --bg: #eceff3;
+  --surface: #ffffff;
+  --surface-2: #f2f4f7;
+  --border: #dde2e9;
+  --field-border: #7d849c;
+  --grid: #e8ecf1;
+  --text: #0e1116;
+  --text-muted: #535c6c;
+
+  --z1: #7b8fbd; /* hell genug für dunkle Schrift (aktiver Tab, Plakat) */
+  --z2: #1fae72;
+  --z3: #e8a520;
+  --z4: #f07a2a;
+  --z5: #e8483c;
+
+  --accent: #b5520f; /* dunkleres Orange, damit Schrift lesbar bleibt */
+  --accent-contrast: #ffffff;
+  --accent-soft: color-mix(in srgb, var(--z4) 14%, transparent);
+
+  --c-fiber: #8a7558;
+
+  --success: #157a3e;
+  --success-soft: #e3f6ea;
+  --warning: #a86d00;
+  --danger: #b42318;
+  --danger-soft: #fdecec;
+
+  --tooltip-bg: #0e1116;
+  --tooltip-text: #ffffff;
+  --shadow-lg: 0 24px 60px rgba(16, 24, 40, 0.2);
+
+  color-scheme: light;
 }
 
 /* ---------- 2. Grundlayout ---------- */
@@ -146,8 +131,8 @@ html {
 
 body {
   margin: 0;
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-size: 15px;
+  font-family: var(--font-body);
+  font-size: 16px;
   line-height: 1.5;
   background: var(--bg);
   color: var(--text);
@@ -567,7 +552,7 @@ svg {
 
 .select {
   padding: 8px 34px 8px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 10px;
   background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
   font-size: 14px;
@@ -932,7 +917,11 @@ svg {
 [data-cat="gym"] { --cat: var(--c-gym); }
 [data-cat="mobility"] { --cat: var(--c-mobility); }
 [data-cat="comeback"] { --cat: var(--c-comeback); }
-[data-cat] { --cat-soft: color-mix(in srgb, var(--cat) 13%, transparent); }
+[data-cat] {
+  --cat-soft: color-mix(in srgb, var(--cat) 13%, transparent);
+  /* Schrift in Kategoriefarbe: mit der Textfarbe gemischt, damit sie in hell & dunkel lesbar bleibt */
+  --cat-text: color-mix(in srgb, var(--cat) 60%, var(--text));
+}
 
 /* Diagramme */
 .stats-grid {
@@ -1042,7 +1031,7 @@ svg {
 .tab.active {
   border-color: var(--cat);
   background: var(--cat-soft);
-  color: var(--cat);
+  color: var(--cat-text);
 }
 
 .tab small {
@@ -1096,9 +1085,10 @@ svg {
 .day-today {
   padding: 1px 7px;
   border-radius: 999px;
-  background: var(--cat);
-  color: #fff;
-  font-size: 10.5px;
+  background: var(--cat-soft);
+  box-shadow: inset 0 0 0 1px var(--cat);
+  color: var(--text);
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1116,7 +1106,7 @@ svg {
   margin-top: 6px;
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--cat);
+  color: var(--cat-text);
 }
 
 .day-tile.rest .day-count {
@@ -1199,7 +1189,7 @@ svg {
   height: 36px;
   border-radius: 10px;
   background: var(--cat-soft);
-  color: var(--cat);
+  color: var(--cat-text);
   font-weight: 700;
 }
 
@@ -1226,7 +1216,7 @@ svg {
 
 .chip.strong {
   background: var(--cat-soft);
-  color: var(--cat);
+  color: var(--cat-text);
 }
 
 .ex-detail {
@@ -1267,7 +1257,7 @@ svg {
   margin-bottom: 6px;
   border-radius: 14px;
   background: var(--cat-soft);
-  color: var(--cat);
+  color: var(--cat-text);
 }
 
 .empty-state svg {
@@ -1291,7 +1281,7 @@ svg {
 .plan-info h3 svg {
   width: 18px;
   height: 18px;
-  color: var(--cat);
+  color: var(--cat-text);
 }
 
 .tip-list {
@@ -1416,7 +1406,7 @@ svg {
 .field .select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 10px;
   background-color: var(--surface-2);
 }
@@ -1649,10 +1639,6 @@ svg {
   color: var(--text);
   font-size: 12px;
   text-align: center;
-}
-
-.zone-strong b {
-  color: #fff;
 }
 
 .zone-value {
@@ -2039,7 +2025,7 @@ svg {
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: 10px;
   background: var(--surface-2);
 }
@@ -2212,7 +2198,7 @@ svg {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
   .food-pick-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2339,7 +2325,7 @@ label.btn {
   flex: 1;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
   /* Menü links wird durch die untere Leiste ersetzt */
   .topbar .icon-btn.menu-btn {
     display: none;
@@ -2482,13 +2468,13 @@ label.btn {
 .chip-trend.down { color: var(--danger); }
 
 .ex-actions .icon-btn.history {
-  color: var(--cat);
+  color: var(--cat-text);
   border-color: color-mix(in srgb, var(--cat) 35%, var(--border));
 }
 
 .ex-actions .icon-btn.history:hover {
   background: var(--cat-soft);
-  color: var(--cat);
+  color: var(--cat-text);
 }
 
 .modal--wide {
@@ -2506,11 +2492,6 @@ label.btn {
   align-items: center;
   justify-content: space-between;
   gap: 8px 12px;
-}
-
-.weight-toolbar .segmented button.active {
-  background: var(--cat);
-  color: #fff;
 }
 
 .weight-stats {
@@ -2584,12 +2565,6 @@ label.btn {
   display: grid;
   grid-template-columns: 1.3fr 1fr 0.8fr;
   gap: 10px;
-}
-
-.weight-form .btn-primary {
-  background: var(--cat);
-  box-shadow: none;
-  color: #fff;
 }
 
 .entry-list {
@@ -2818,7 +2793,7 @@ button.strength-row:focus-visible {
 }
 
 /* Smartphones: Sidebar wird ausklappbares Menü */
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
   :root {
     --sidebar-w: 260px;
   }
@@ -2969,7 +2944,7 @@ button.strength-row:focus-visible {
 }
 
 /* Gewichtsverlauf & Kraftfortschritt auf schmalen Bildschirmen */
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
   .weight-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3054,4 +3029,509 @@ button.strength-row:focus-visible {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ==========================================================
+   5. Touch-Optimierung (aus der UI/UX-Prüfung)
+   Steht bewusst am Ende, damit diese Regeln die Größen oben überschreiben.
+   ========================================================== */
+
+/* Sichtbare Rückmeldung beim Antippen – ohne dass sich das Layout verschiebt */
+button,
+.btn,
+label.check-item,
+.quick {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:active:not(:disabled),
+.segmented button:active:not(:disabled),
+.tab:active,
+.day-tile:active,
+.food-pick:active,
+.fav-chip:active,
+.check-item:active,
+.strength-row:active,
+.bottom-nav button:active {
+  background: var(--surface-2);
+  transition-duration: 0s;
+}
+
+.btn-primary:active {
+  filter: brightness(0.92);
+}
+
+.bottom-nav button {
+  transition: color 0.12s, background 0.12s;
+}
+
+/* iPhone zoomt in Eingabefelder unter 16 px hinein – auf Touch-Geräten daher 16 px */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(.focus-input),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Tippflächen auf dem Handy mindestens 44 × 44 px */
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  body .icon-btn,
+  body .ex-actions .icon-btn,
+  body .meal-head .icon-btn,
+  body .diary-entry .icon-btn,
+  body .entry .icon-btn,
+  body .food-item .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  body .segmented button,
+  body .water-btns .btn,
+  body .btn {
+    min-height: 44px;
+  }
+
+  body .water-btns .btn {
+    min-width: 44px;
+  }
+
+  body .focus-input {
+    min-height: 44px;
+  }
+
+  body .select,
+  body .field input {
+    min-height: 44px;
+  }
+}
+
+/* Handy im Querformat: kompaktere Leisten, damit Inhalt Platz hat */
+@media (max-height: 500px) and (pointer: coarse) {
+  body .bottom-nav button {
+    flex-direction: row;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+  }
+
+  body .bottom-nav button.active [data-icon] {
+    padding: 0;
+    background: none;
+  }
+
+  body .bottom-nav svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  body.app-views .content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bottom-nav {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+
+  body .topbar,
+  body.app-views .content {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+}
+
+/* ==========================================================
+   6. Designsystem „Pulszonen × Plakat“
+   Überschreibt das Aussehen der Bauteile oben (Funktion bleibt gleich).
+   ========================================================== */
+
+/* Typografie */
+.muted { font-size: 14px; }
+
+.eyebrow,
+.chart-legend,
+.pill,
+.badge,
+.kpi-meta,
+.progress-meta,
+.goal-card-title,
+.legend-pct,
+.check-text span,
+.day-count,
+.wstat-label,
+.strength-head {
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+}
+
+.eyebrow { font-size: 12px; font-weight: 500; }
+
+.page-title,
+.section-head h2,
+.card-head h3,
+.plan-info h3,
+.modal-head h3,
+.meal-head h4,
+.brand-name,
+.focus-input,
+.day-name,
+.ex-num,
+.kpi-value,
+.donut-center strong,
+.legend-val,
+.wstat strong,
+.body-now strong,
+.diary-kcal,
+.strength-current,
+.selected-name,
+.preview strong,
+.week-total {
+  font-family: var(--font-num);
+  letter-spacing: 0.005em;
+}
+
+.page-title { font-size: 28px; font-weight: 700; line-height: 1.05; }
+.section-head h2 { font-size: 34px; font-weight: 700; line-height: 1; }
+.card-head h3, .plan-info h3, .modal-head h3 { font-size: 22px; font-weight: 700; }
+.meal-head h4 { font-size: 18px; font-weight: 700; }
+.focus-input { font-size: 30px; font-weight: 700; }
+.day-name { font-size: 20px; font-weight: 700; }
+
+/* Flächen: keine Schatten, keine Rahmen – Tiefe nur über Flächenfarbe */
+.card,
+.quick,
+.segmented,
+.btn-ghost,
+.icon-btn,
+.tab,
+.day-tile,
+.exercise,
+.check-item,
+.type-card,
+.fav-chip {
+  box-shadow: none;
+}
+
+.card { border: 0; }
+
+.sidebar { background: var(--bg); border-right-color: var(--border); }
+
+.brand-logo {
+  background: var(--z4);
+  color: var(--ink);
+  border-radius: 10px;
+}
+
+.brand-name { font-size: 26px; font-weight: 700; }
+
+.nav-link { border-radius: 10px; }
+
+.nav-link.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--z4);
+}
+
+.topbar { background: var(--bg); background: color-mix(in srgb, var(--bg) 88%, transparent); }
+
+/* Knöpfe: Hauptaktion invertiert wie der „Start“-Balken */
+.btn-primary {
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: none;
+}
+
+.btn-ghost { background: var(--surface); border-color: var(--border); }
+
+.segmented { background: var(--surface); border-color: var(--border); }
+
+.segmented button.active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.segmented button { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+
+.period-label { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+
+/* Kennzahlen wie auf einem Instrument */
+.kpi { gap: 10px; }
+
+.kpi-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.kpi-icon {
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--kpi-color);
+}
+
+.kpi-icon svg { width: 18px; height: 18px; }
+
+.kpi-value { font-size: 44px; font-weight: 700; line-height: 0.95; letter-spacing: 0; }
+.kpi-value small { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+
+.progress { height: 6px; border-radius: 3px; }
+
+.badge { font-size: 12px; font-weight: 500; }
+
+/* Kategorie-Elemente */
+.tab { font-family: var(--font-num); font-size: 18px; font-weight: 700; }
+.tab small { font-family: var(--font-mono); font-size: 11px; font-weight: 400; }
+.tab.active { background: var(--cat); color: var(--ink); border-color: var(--cat); }
+.tab.active small { color: var(--ink); }
+.tab.active .dot { background: var(--ink); }
+
+.day-tile { background: var(--surface); border-color: transparent; }
+.day-tile.active { border-color: var(--cat); box-shadow: none; background: var(--surface-2); }
+
+.exercise { background: var(--surface-2); border-color: transparent; }
+.ex-num { background: none; font-size: 24px; font-weight: 700; color: var(--text-muted); }
+
+.chip { font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+
+/* Schnellaktionen */
+.quick {
+  border-color: var(--border);
+  background: var(--surface);
+  font-family: var(--font-num);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.quick svg { color: var(--z4); }
+
+/* Untere Navigation: Strich in Zone 4 statt Pille */
+.bottom-nav { background: var(--bg); box-shadow: none; }
+.bottom-nav button { font-family: var(--font-mono); font-size: 11px; font-weight: 500; }
+.bottom-nav button.active { color: var(--text); }
+.bottom-nav button.active [data-icon] { background: none; padding: 0; }
+.bottom-nav button::before {
+  content: "";
+  width: 22px;
+  height: 3px;
+  margin-bottom: 2px;
+  border-radius: 2px;
+  background: transparent;
+}
+.bottom-nav button.active::before { background: var(--z4); }
+
+/* Dialoge & Toast */
+.modal { border-color: var(--border); background: var(--surface); }
+.toast { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
+  .section-head h2 { font-size: 30px; }
+  .kpi-value { font-size: 36px; }
+  .page-title { font-size: 24px; }
+}
+
+/* ---------- Heute: Plakat-Bühne & Instrumente ---------- */
+.today-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.today-col { display: grid; gap: 16px; min-width: 0; }
+
+.stage { overflow: hidden; padding: 0; }
+
+.poster {
+  position: relative;
+  padding: 18px 18px 20px;
+  background: var(--cat);
+  color: var(--ink);
+}
+
+.poster .eyebrow { color: var(--ink); }
+
+.poster h3 {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(60px, 8vw, 104px);
+  line-height: 0.86;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.poster-sub { margin-top: 10px; font-weight: 600; font-size: 16px; }
+
+.zone-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 4px 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.moves { margin: 0; padding: 4px 18px; list-style: none; }
+
+.move {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.moves li:last-child .move { border-bottom: 0; }
+
+.move:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+.move-no { font-family: var(--font-num); font-weight: 700; font-size: 22px; color: var(--text-muted); }
+.move-name { display: block; font-weight: 600; font-size: 16px; line-height: 1.25; }
+.move-meta { display: block; margin-top: 2px; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+
+.move-dose {
+  max-width: 7em;
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.05;
+  text-align: right;
+}
+
+.move.next .move-no { color: var(--text); box-shadow: inset 3px 0 0 var(--cat); padding-left: 8px; margin-left: -8px; }
+
+.next-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cat) 20%, transparent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  vertical-align: 2px;
+}
+
+.move.done .move-name,
+.move.done .move-dose { color: var(--text-muted); text-decoration: line-through; }
+
+.move-cat { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--cat); }
+
+.start-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 0 18px;
+  border: 0;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 22px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.start-bar span:last-child { font-family: var(--font-mono); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.start-bar:active { filter: brightness(0.9); }
+.start-bar:focus-visible { outline: 3px solid var(--z4); outline-offset: -3px; }
+
+.stage-empty { padding: 18px; color: var(--text-muted); }
+
+/* Ringe */
+.rings { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 18px; }
+.rings svg { width: 150px; height: 150px; }
+.ring-legend { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.ring-legend li { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 10px; }
+.ring-legend i { width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; }
+.ring-legend b { display: block; font-family: var(--font-num); font-size: 28px; font-weight: 700; line-height: 1; }
+.ring-legend small { font-family: var(--font-body); font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.ring-fg { transition: stroke-dashoffset 900ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* Zonen-Belastung */
+.zonebar { display: flex; gap: 2px; height: 14px; overflow: hidden; border-radius: 4px; background: var(--surface-2); }
+.zone-legend { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+.zone-legend b { display: block; font-family: var(--font-num); font-size: 20px; font-weight: 700; color: var(--text); }
+.week-bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; align-items: end; height: 120px; margin-top: 16px; }
+.week-bar { display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; height: 100%; }
+.week-bar .seg { border-radius: 3px; }
+.week-lbl { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 6px; text-align: center; }
+.week-lbl .is-today { color: var(--text); font-weight: 500; }
+
+/* Kontinuität (Kalender-Kästchen) */
+.heat {
+  display: grid;
+  grid-template-columns: 22px repeat(12, minmax(0, 26px));
+  grid-template-rows: repeat(7, auto);
+  grid-auto-flow: column;
+  justify-content: space-between;
+  gap: 4px;
+}
+.heat .cell { aspect-ratio: 1; border-radius: 3px; background: var(--surface-2); }
+.heat .rowlbl { align-self: center; font-family: var(--font-mono); font-size: 11px; line-height: 1; color: var(--text-muted); }
+.heat-scale { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 10px; }
+.heat-scale i { width: 12px; height: 12px; border-radius: 3px; }
+
+/* Comeback-Leiter */
+.ladder { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: end; gap: 4px; height: 92px; }
+.ladder-step { border-radius: 4px 4px 0 0; background: var(--surface-2); }
+.ladder-step.done { background: var(--z2); }
+.ladder-step.now { background: var(--z3); }
+.ladder-lbl { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 6px; text-align: center; }
+.ladder-info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; font-size: 14px; }
+.ladder-info b { font-family: var(--font-num); font-size: 20px; }
+.ladder-actions { display: flex; gap: 8px; margin-left: auto; }
+
+.mono-sm { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+
+@media (max-width: 1024px) {
+  .today-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 420px) {
+  .rings { grid-template-columns: 120px minmax(0, 1fr); gap: 14px; }
+  .rings svg { width: 120px; height: 120px; }
+  .ring-legend b { font-size: 24px; }
+}
+
+/* Übersicht am Handy kompakt: 2 × 2 Kennzahlen, damit die Bühne früh sichtbar ist */
+@media (max-width: 480px) {
+  body .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  body .kpi { padding: 14px; gap: 8px; }
+  body .kpi-top { flex-wrap: wrap; gap: 6px; }
+  body .kpi-label { gap: 6px; font-size: 11px; }
+  body .kpi-value { font-size: 30px; }
+  body .kpi-value small { font-size: 11px; }
+  body .kpi-sub { font-size: 12px; }
+  body .progress-meta span:last-child { display: none; }
+}
+
+/* Kontrast-Feinschliff */
+.traffic-row b { color: var(--ink); }
+.traffic-row.green b { background: var(--z2); }
+.traffic-row.yellow b { background: var(--z3); }
+.traffic-row.red b { background: var(--z5); }
+
+/* Im hellen Modus braucht Schrift in Planfarbe mehr Anteil der Textfarbe */
+:root[data-theme="light"] [data-cat] {
+  --cat-text: color-mix(in srgb, var(--cat) 35%, var(--text));
 }

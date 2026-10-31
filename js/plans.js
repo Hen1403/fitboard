@@ -356,9 +356,10 @@ const Plans = {
             ${type.zones.rows
               .map(
                 ([tag, value, label], i) => {
-                  const mix = Math.round(20 + (i / (type.zones.rows.length - 1)) * 80);
+                  // Farbe wird mit der Zone kräftiger, bleibt aber hell genug für dunklen/hellen Text
+                  const mix = Math.round(10 + (i / (type.zones.rows.length - 1)) * 25);
                   return `
-              <div class="zone-row${mix > 55 ? ' zone-strong' : ''}" style="--zone-mix:${mix}%">
+              <div class="zone-row" style="--zone-mix:${mix}%">
                 <b>${tag}</b><span class="zone-value">${value}</span><span class="muted">${label}</span>
               </div>`;
                 }

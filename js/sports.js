@@ -341,7 +341,8 @@ const SPORT_TYPES = {
 const SPORT_TYPE_ORDER = ['cycling', 'swimming', 'running', 'strength', 'mobility', 'other'];
 
 /** Farben für eigene Pläne (funktionieren in Hell und Dunkel) */
-const PLAN_COLORS = ['#2f9e64', '#d23f8f', '#7d5bd6', '#c2410c', '#0e7490', '#a16207', '#4f6bed', '#dc3e42'];
+// Kräftige, helle Töne: dunkle Schrift bleibt darauf gut lesbar (Plakat, aktiver Tab)
+const PLAN_COLORS = ['#35c98a', '#f2b33d', '#ff8a3d', '#ff6b62', '#8fa3d6', '#c99bf2', '#5cc8e8', '#e3dc6a'];
 
 /** Neue eindeutige ID für Übungen/Einheiten */
 function newId() {
